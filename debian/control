@@ -12,5 +12,5 @@ Package: python-raven
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}
 Provides: ${python:Provides}
-Description: A Python Logging Sentry
+Description: A Python Logging handler for Sentry
  https://docs.sentry.io/clients/python/  
