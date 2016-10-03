@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_VERBOSE=1
+
+%:
+	dh $@ --with python2
+
+	 
+override_dh_auto_build:
+    # Ignore the makefile on the root of the repository
+	python setup.py sdist
+
+override_dh_auto_test:
+    # Ignore this step until we can install package with pip
