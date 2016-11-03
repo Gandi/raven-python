@@ -14,6 +14,14 @@ import threading
 from django.conf import settings
 from django.core.signals import request_finished
 
+try:
+    # Django >= 1.10
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:
+    # Not required for Django <= 1.9, see:
+    # https://docs.djangoproject.com/en/1.10/topics/http/middleware/#upgrading-pre-django-1-10-style-middleware
+    MiddlewareMixin = object
+
 from raven.contrib.django.resolver import RouteResolver
 
 
@@ -27,11 +35,17 @@ def is_ignorable_404(uri):
     )
 
 
-class Sentry404CatchMiddleware(object):
+class Sentry404CatchMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
+        if response.status_code != 404:
+            return response
+
+        if is_ignorable_404(request.get_full_path()):
+            return response
+
         from raven.contrib.django.models import client
 
-        if response.status_code != 404 or is_ignorable_404(request.get_full_path()) or not client.is_enabled():
+        if not client.is_enabled():
             return response
 
         data = client.get_data_from_request(request)
@@ -52,7 +66,7 @@ class Sentry404CatchMiddleware(object):
     # sentry_exception_handler(sender=Sentry404CatchMiddleware, request=request)
 
 
-class SentryResponseErrorIdMiddleware(object):
+class SentryResponseErrorIdMiddleware(MiddlewareMixin):
     """
     Appends the X-Sentry-ID response header for referencing a message within
     the Sentry datastore.
@@ -64,7 +78,16 @@ class SentryResponseErrorIdMiddleware(object):
         return response
 
 
-class SentryMiddleware(threading.local):
+# We need to make a base class for our sentry middleware that is thread
+# local but at the same time has the new fnagled middleware mixin applied
+# if such a thing exists.
+if MiddlewareMixin is object:
+    _SentryMiddlewareBase = threading.local
+else:
+    _SentryMiddlewareBase = type('_SentryMiddlewareBase', (MiddlewareMixin, threading.local), {})
+
+
+class SentryMiddleware(_SentryMiddlewareBase):
     resolver = RouteResolver()
 
     # backwards compat

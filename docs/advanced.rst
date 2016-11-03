@@ -51,7 +51,7 @@ settings:
     import raven
 
     client = raven.Client(
-        dsn='___DSN___'
+        dsn='___DSN___',
 
         # inform the client which parts of code are yours
         # include_paths=['my.app']
@@ -105,6 +105,12 @@ The following are valid arguments which may be passed to the Raven client:
 
         release = '1.0.3'
 
+.. describe:: environment
+
+    The environment your application is running in::
+
+        environment = 'staging'
+
 .. describe:: exclude_paths
 
     Extending this allow you to ignore module prefixes when we attempt to
@@ -139,7 +145,7 @@ The following are valid arguments which may be passed to the Raven client:
             'django.exceptions.*',
         ]
 
-.. describe:: max_list_length
+.. describe:: list_max_length
 
     The maximum number of items a list-like container should store.
 
